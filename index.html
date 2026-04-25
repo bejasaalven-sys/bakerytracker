@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarah's Bakery Inventory Tracker</title>
+    <!-- Custom CSS only -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="hero-header">
+            <h1 class="display-title">🥖 Sarah's Bakery Tracker</h1>
+            <p class="hero-subtitle">Never waste ingredients again</p>
+        </header>
+
+        <!-- Stats Cards -->
+        <section class="stats-grid">
+            <div class="stat-card critical">
+                <div class="stat-number" id="criticalCount">0</div>
+                <div class="stat-label">Expiring <48h</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-number" id="warningCount">0</div>
+                <div class="stat-label">Expiring <7 days</div>
+            </div>
+            <div class="stat-card safe">
+                <div class="stat-number" id="safeCount">0</div>
+                <div class="stat-label">Safe</div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+        </section>
+
+        <!-- Add Item Form -->
+        <section class="form-section">
+            <div class="form-card">
+                <h3 class="form-title">
+                    <span class="icon">➕</span>
+                    Add New Ingredient
+                </h3>
+                <form id="addItemForm" class="input-grid">
+                    <div class="input-group">
+                        <label for="itemName">Ingredient Name</label>
+                        <input type="text" id="itemName" placeholder="Sourdough starter" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="itemQuantity">Quantity</label>
+                        <input type="text" id="itemQuantity" placeholder="2kg" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="itemExpiry">Expires</label>
+                        <input type="date" id="itemExpiry" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Ingredient</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Inventory List -->
+        <section class="inventory-section">
+            <div class="inventory-header">
+                <h3 class="section-title">📦 Current Inventory</h3>
+                <button class="btn-danger" id="clearAllBtn">
+                    <span class="icon">🗑️</span> Clear All
+                </button>
+            </div>
+            <div id="inventoryList" class="inventory-list">
+                <!-- Items will be dynamically added here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="function.js"></script>
+</body>
+</html>
