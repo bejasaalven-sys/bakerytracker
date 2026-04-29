@@ -3,78 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sarah's Bakery Inventory Tracker</title>
-    <!-- Custom CSS only -->
+    <title>Inventory Manager 🍳</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="hero-header">
-            <h1 class="display-title">🥖 Sarah's Bakery Tracker</h1>
-            <p class="hero-subtitle">Never waste ingredients again</p>
+        <header class="header">
+            <h1 class="title"><i class="fas fa-utensils"></i> Inventory Manager</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
         </header>
 
         <!-- Stats Cards -->
-        <section class="stats-grid">
-            <div class="stat-card critical">
-                <div class="stat-number" id="criticalCount">0</div>
-                <div class="stat-label">Expiring <48h</div>
+        <div class="stats">
+            <div class="stat green" data-category="used">
+                <span class="stat-label">Used Ingredients</span>
+                <span class="stat-value" id="usedCount">0</span>
             </div>
-            <div class="stat-card warning">
-                <div class="stat-number" id="warningCount">0</div>
-                <div class="stat-label">Expiring <7 days</div>
+            <div class="stat red" data-category="to-use">
+                <span class="stat-label">To Be Used</span>
+                <span class="stat-value" id="toUseCount">0</span>
             </div>
-            <div class="stat-card safe">
-                <div class="stat-number" id="safeCount">0</div>
-                <div class="stat-label">Safe</div>
+            <div class="stat brown" data-category="total">
+                <span class="stat-label">Total Ingredients</span>
+                <span class="stat-value" id="totalCount">0</span>
             </div>
-            <div class="stat-card total">
-                <div class="stat-number" id="totalCount">0</div>
-                <div class="stat-label">Total Items</div>
+            <div class="stat yellow" data-category="expiring">
+                <span class="stat-label">About to Expire</span>
+                <span class="stat-value" id="expiringCount">0</span>
             </div>
-        </section>
+        </div>
 
-        <!-- Add Item Form -->
-        <section class="form-section">
-            <div class="form-card">
-                <h3 class="form-title">
-                    <span class="icon">➕</span>
-                    Add New Ingredient
-                </h3>
-                <form id="addItemForm" class="input-grid">
-                    <div class="input-group">
-                        <label for="itemName">Ingredient Name</label>
-                        <input type="text" id="itemName" placeholder="Sourdough starter" required>
+        <main class="game-area">
+            <!-- Current Item Display -->
+            <div class="choice-area">
+                <div class="choice current-item">
+                    <h3>Current Item</h3>
+                    <div class="choice-display" id="currentItem">
+                        <i class="fas fa-box"></i>
+                        <span>Select an ingredient</span>
                     </div>
-                    <div class="input-group">
-                        <label for="itemQuantity">Quantity</label>
-                        <input type="text" id="itemQuantity" placeholder="2kg" required>
+                </div>
+                <div class="result-area">
+                    <div class="result-text" id="resultText">Add ingredients to manage your inventory!</div>
+                    <div class="score-display" id="itemStatus">Status: Ready</div>
+                </div>
+                <div class="choice status-display">
+                    <h3>Status</h3>
+                    <div class="choice-display" id="statusDisplay">
+                        <span class="status-badge neutral">Ready</span>
                     </div>
-                    <div class="input-group">
-                        <label for="itemExpiry">Expires</label>
-                        <input type="date" id="itemExpiry" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Add Ingredient</button>
-                </form>
+                </div>
             </div>
-        </section>
 
-        <!-- Inventory List -->
-        <section class="inventory-section">
-            <div class="inventory-header">
-                <h3 class="section-title">📦 Current Inventory</h3>
-                <button class="btn-danger" id="clearAllBtn">
-                    <span class="icon">🗑️</span> Clear All
+            <!-- Action Buttons -->
+            <div class="choices-grid" id="choicesGrid">
+                <button class="choice-btn mark-used" data-action="markUsed" title="Mark as Used">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Mark Used</span>
+                </button>
+                <button class="choice-btn mark-to-use" data-action="markToUse" title="Mark To Be Used">
+                    <i class="fas fa-clock"></i>
+                    <span>To Be Used</span>
+                </button>
+                <button class="choice-btn edit-expiry" data-action="editExpiry" title="Set Expiry">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Expiry Date</span>
+                </button>
+                <button class="choice-btn delete-item" data-action="delete" title="Delete Item">
+                    <i class="fas fa-trash"></i>
+                    <span>Delete</span>
                 </button>
             </div>
-            <div id="inventoryList" class="inventory-list">
-                <!-- Items will be dynamically added here -->
+        </main>
+
+        <!-- Add New Item -->
+        <div class="add-item-section">
+            <input type="text" id="newItemName" placeholder="Enter ingredient name..." class="item-input">
+            <button class="add-btn" id="addBtn">
+                <i class="fas fa-plus"></i> Add Item
+            </button>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">
+            <i class="fas fa-redo"></i> Reset Inventory
+        </button>
+
+        <!-- Modal for editing -->
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <h2 id="modalTitle">Edit Item</h2>
+                <input type="text" id="editItemName" placeholder="Item name" class="modal-input">
+                <input type="date" id="editExpiryDate" class="modal-input">
+                <div class="modal-buttons">
+                    <button class="modal-btn save-btn" id="saveBtn">Save</button>
+                    <button class="modal-btn cancel-btn" id="cancelBtn">Cancel</button>
+                </div>
             </div>
-        </section>
+        </div>
     </div>
 
-    <!-- Custom JS -->
-    <script src="function.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
