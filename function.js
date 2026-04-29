@@ -6,7 +6,283 @@
 // Global inventory array - Single Source of Truth
 let inventory = [];
 
-// DOM Elements Cache for performance
+// DOM Elements Cache for performance// Inventory State
+let inventoryState = {
+    items: JSON.parse(localStorage.getItem('inventory')) || [],
+    currentItemIndex: -1,
+    editingItem: null
+};
+
+// Categories
+const categories = {
+    used: [],
+    'to-use': [],
+    total: [],
+    expiring: []
+};
+
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = {
+        usedCount: document.querySelector('#usedCount'),
+        toUseCount: document.querySelector('#toUseCount'),
+        totalCount: document.querySelector('#totalCount'),
+        expiringCount: document.querySelector('#expiringCount'),
+        currentItem: document.querySelector('#currentItem'),
+        resultText: document.querySelector('#resultText'),
+        itemStatus: document.querySelector('#itemStatus'),
+        statusDisplay: document.querySelector('#statusDisplay'),
+        choicesGrid: document.querySelector('#choicesGrid'),
+        newItemName: document.querySelector('#newItemName'),
+        addBtn: document.querySelector('#addBtn'),
+        resetBtn: document.querySelector('#resetBtn'),
+        editModal: document.querySelector('#editModal'),
+        editItemName: document.querySelector('#editItemName'),
+        editExpiryDate: document.querySelector('#editExpiryDate'),
+        saveBtn: document.querySelector('#saveBtn'),
+        cancelBtn: document.querySelector('#cancelBtn')
+    };
+
+    function init() {
+        updateStats();
+        selectFirstItem();
+        addEventListeners(elements);
+        updateThemeToggle();
+        saveInventory();
+    }
+
+    function addEventListeners(elements) {
+        // Action buttons
+        elements.choicesGrid.addEventListener('click', handleActionClick);
+        
+        // Add new item
+        if (elements.addBtn) elements.addBtn.addEventListener('click', addNewItem);
+        if (elements.newItemName) elements.newItemName.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addNewItem();
+        });
+        
+        // Reset
+        if (elements.resetBtn) elements.resetBtn.addEventListener('click', resetInventory);
+        
+        // Modal
+        if (elements.saveBtn) elements.saveBtn.addEventListener('click', saveEdit);
+        if (elements.cancelBtn) elements.cancelBtn.addEventListener('click', closeModal);
+        
+        // Theme toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    function handleActionClick(e) {
+        const btn = e.target.closest('.choice-btn');
+        if (!btn || inventoryState.currentItemIndex === -1) return;
+
+        const action = btn.dataset.action;
+        const item = inventoryState.items[inventoryState.currentItemIndex];
+
+        switch(action) {
+            case 'markUsed':
+                markItemUsed(item);
+                break;
+            case 'markToUse':
+                markItemToUse(item);
+                break;
+            case 'editExpiry':
+                openEditModal(item);
+                break;
+            case 'delete':
+                deleteItem(item);
+                break;
+        }
+    }
+
+    function markItemUsed(item) {
+        item.status = 'used';
+        updateCategories();
+        updateStats();
+        updateCurrentItemDisplay();
+        showResult('✅ Item marked as USED!', 'success');
+        saveInventory();
+    }
+
+    function markItemToUse(item) {
+        item.status = 'to-use';
+        updateCategories();
+        updateStats();
+        updateCurrentItemDisplay();
+        showResult('🔴 Item marked TO BE USED!', 'warning');
+        saveInventory();
+    }
+
+    function deleteItem(item) {
+        inventoryState.items.splice(inventoryState.currentItemIndex, 1);
+        selectNextItem();
+        updateCategories();
+        updateStats();
+        showResult('🗑️ Item deleted!', 'danger');
+        saveInventory();
+    }
+
+    function addNewItem() {
+        const name = elements.newItemName.value.trim();
+        if (!name) return;
+
+        const newItem = {
+            id: Date.now(),
+            name: name,
+            status: 'normal',
+            expiryDate: null,
+            addedDate: new Date().toISOString().split('T')[0]
+        };
+
+        inventoryState.items.unshift(newItem);
+        elements.newItemName.value = '';
+        selectItem(0);
+        updateCategories();
+        updateStats();
+        showResult(`➕ "${name}" added to inventory!`, 'success');
+        saveInventory();
+    }
+
+    function openEditModal(item) {
+        inventoryState.editingItem = item;
+        elements.editItemName.value = item.name;
+        elements.editExpiryDate.value = item.expiryDate || '';
+        elements.editModal.classList.add('active');
+        document.querySelector('#modalTitle').textContent = `Edit: ${item.name}`;
+    }
+
+    function saveEdit() {
+        if (!inventoryState.editingItem) return;
+        
+        inventoryState.editingItem.name = elements.editItemName.value.trim();
+        inventoryState.editingItem.expiryDate = elements.editExpiryDate.value || null;
+        
+        updateCurrentItemDisplay();
+        updateCategories();
+        updateStats();
+        closeModal();
+        saveInventory();
+        showResult('💾 Item updated!', 'success');
+    }
+
+    function closeModal() {
+        elements.editModal.classList.remove('active');
+        inventoryState.editingItem = null;
+    }
+
+    function selectFirstItem() {
+        if (inventoryState.items.length > 0) {
+            selectItem(0);
+        }
+    }
+
+    function selectItem(index) {
+        inventoryState.currentItemIndex = index;
+        updateCurrentItemDisplay();
+    }
+
+    function selectNextItem() {
+        const nextIndex = (inventoryState.currentItemIndex + 1) % inventoryState.items.length;
+        if (inventoryState.items.length > 0) {
+            selectItem(nextIndex);
+        } else {
+            inventoryState.currentItemIndex = -1;
+            elements.currentItem.innerHTML = '<i class="fas fa-box"></i><span>No items</span>';
+        }
+    }
+
+    function updateCurrentItemDisplay() {
+        if (inventoryState.currentItemIndex === -1) return;
+
+        const item = inventoryState.items[inventoryState.currentItemIndex];
+        const statusClass = item.status || 'normal';
+        
+        elements.currentItem.innerHTML = `
+            <i class="fas fa-${getItemIcon(item)}"></i>
+            <span>${item.name}</span>
+            ${item.expiryDate ? `<small>Expires: ${item.expiryDate}</small>` : ''}
+        `;
+        elements.currentItem.className = `choice-display ${statusClass}`;
+        
+        elements.statusDisplay.innerHTML = `<span class="status-badge ${statusClass}">${statusClass.toUpperCase()}</span>`;
+    }
+
+    function updateCategories() {
+        categories.used = inventoryState.items.filter(item => item.status === 'used');
+        categories['to-use'] = inventoryState.items.filter(item => item.status === 'to-use');
+        categories.total = inventoryState.items;
+        categories.expiring = inventoryState.items.filter(item => 
+            item.expiryDate && isExpiringSoon(item.expiryDate)
+        );
+    }
+
+    function isExpiringSoon(dateStr) {
+        const expiryDate = new Date(dateStr);
+        const today = new Date();
+        const diffTime = expiryDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 3 && diffDays > 0;
+    }
+
+    function updateStats() {
+        updateCategories();
+        elements.usedCount.textContent = categories.used.length;
+        elements.toUseCount.textContent = categories['to-use'].length;
+        elements.totalCount.textContent = categories.total.length;
+        elements.expiringCount.textContent = categories.expiring.length;
+    }
+
+    function showResult(message, type) {
+        elements.resultText.textContent = message;
+        elements.resultText.className = `result-text ${type}`;
+        elements.itemStatus.textContent = `Status: ${type.toUpperCase()}`;
+    }
+
+    function getItemIcon(item) {
+        if (item.status === 'used') return 'check-circle';
+        if (item.status === 'to-use') return 'clock';
+        if (isExpiringSoon(item.expiryDate)) return 'exclamation-triangle';
+        return 'box';
+    }
+
+    function resetInventory() {
+        if (confirm('Reset entire inventory? This cannot be undone.')) {
+            inventoryState.items = [];
+            inventoryState.currentItemIndex = -1;
+            updateStats();
+            updateCurrentItemDisplay();
+            showResult('🗑️ Inventory reset!', 'danger');
+            saveInventory();
+        }
+    }
+
+    function saveInventory() {
+        localStorage.setItem('inventory', JSON.stringify(inventoryState.items));
+    }
+
+    // Theme functions (keep your existing ones)
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.innerHTML = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    function updateThemeToggle() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeToggle = document.querySelector('.theme-toggle');
+        if (themeToggle) {
+            themeToggle.innerHTML = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+    }
+
+    init();
+});
 const DOM = {
     form: document.getElementById('addItemForm'),
     nameInput: document.getElementById('itemName'),
