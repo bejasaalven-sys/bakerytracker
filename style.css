@@ -96,7 +96,7 @@ body {
 }
 
 .stat-card.expired::before {
-    background: linear-gradient(90deg, var(--expired-red), #adb5bd);
+    background: linear-gradient(90deg, var(--expired-gray), #adb5bd);
 }
 
 .stat-card.critical {
