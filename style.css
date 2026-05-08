@@ -99,14 +99,6 @@ body {
    background: linear-gradient(90deg, var(--critical-red), #ff6b6b);
 }
 
-.stat-card.critical {
-    color: white;
-}
-
-.stat-card.critical::before {
-    background: linear-gradient(90deg, var(--critical-red), #ff6b6b);
-}
-
 .stat-card.warning {
     color: #333;
 }
