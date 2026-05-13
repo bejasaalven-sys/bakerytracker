@@ -34,7 +34,7 @@ function daysUntilExpiry(expiryDate) {
 }
 
 function getItemStatus(expiryDate, isUsed = false) {
-    if (isUsed) return 'used';
+    if (isUsed) return 'disposed';
     const days = daysUntilExpiry(expiryDate);
     if (days < 0) return 'expired';
     if (days < 2) return 'critical';
